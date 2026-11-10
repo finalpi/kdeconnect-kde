@@ -18,6 +18,7 @@ KDEConnect.includes
 .vscode
 .github/workflows/*
 !.github/workflows/windows-native.yml
+!.github/workflows/publish-windows.yml
 /packaging/windows/__pycache__/
 
 # Eclipse settings

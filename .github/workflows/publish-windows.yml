@@ -1,0 +1,51 @@
+name: Publish verified Windows installer
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Windows native clipboard build run ID
+        required: true
+      tag:
+        description: Existing release tag matching that build commit
+        required: true
+        default: v26.08.2-native.1
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ inputs.run_id }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Verify build, source tag and artifact checksums
+        run: |
+          gh api "repos/$GH_REPO/actions/runs/$RUN_ID" > run.json
+          gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha > tag-sha.txt
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          run = json.loads(Path('run.json').read_text())
+          assert run['conclusion'] == 'success', 'Build has not passed'
+          assert run['path'] == '.github/workflows/windows-native.yml', 'Unexpected build workflow'
+          assert run['head_sha'] == Path('tag-sha.txt').read_text().strip(), 'Tag differs from tested build'
+          PY
+          gh run download "$RUN_ID" --name kdeconnect-native-windows-x64 --dir dist
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          info = json.loads(Path('dist/fork-build.json').read_text(encoding='utf-8-sig'))
+          assert not info['sourceDirty'], 'Artifact was built from dirty source'
+          assert info['sourceCommit'] == Path('tag-sha.txt').read_text().strip(), 'Artifact source mismatch'
+          rows = Path('dist/SHA256SUMS.txt').read_text().splitlines()
+          assert len(rows) == 1, 'Expected a single installer checksum'
+          expected, name = rows[0].split()
+          assert '/' not in name and '\\' not in name and name.endswith('-windows-x64.exe')
+          assert hashlib.sha256((Path('dist') / name).read_bytes()).hexdigest() == expected, 'Installer checksum mismatch'
+          PY
+      - name: Upload complete installer and provenance to release
+        run: |
+          gh release upload "$RELEASE_TAG" dist/kdeconnect-*-windows-x64.exe dist/SHA256SUMS.txt dist/fork-build.json --clobber
