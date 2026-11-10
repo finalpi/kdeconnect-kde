@@ -41,12 +41,15 @@ protected:
 
 private:
     qint64 m_updateTimestamp = 0;
+    quint64 m_revision = 0;
+    quint64 m_imageRequest = 0;
 
 public:
     static ClipboardListener *instance();
 
     void setText(const QString &content);
     void setFile(const KJob *job);
+    void prepareImageTransfer(KJob *job);
 
     QVariant currentContent();
     ClipboardContentType currentContentType();

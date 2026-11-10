@@ -7,7 +7,7 @@
 #include "clipboardplugin.h"
 
 #include "clipboardlistener.h"
-#include "core/daemon.h"
+
 #include "core/filetransferjob.h"
 #include "plugin_clipboard_debug.h"
 
@@ -141,6 +141,9 @@ void ClipboardPlugin::sendClipboard(const QVariant &content)
 
 void ClipboardPlugin::sendConnectPacket()
 {
+    if (ClipboardListener::instance()->currentContent().typeId() != QMetaType::QString) {
+        return; // Images/files use their payload channel, never a text connect packet.
+    }
     if (!autoShare || (!sharePasswords && ClipboardListener::instance()->currentContentType() == ClipboardListener::ClipboardContentTypePassword)) {
         // avoid sharing clipboard if the content is no need to share
         return;
@@ -155,6 +158,9 @@ void ClipboardPlugin::sendConnectPacket()
 void ClipboardPlugin::receivePacket(const NetworkPacket &np)
 {
     if (np.type() == PACKET_TYPE_CLIPBOARD_FILE) {
+        if (np.get<bool>(QStringLiteral("isImage"), false) && (np.payloadSize() <= 0 || np.payloadSize() > 50 * ONE_MB)) {
+            return;
+        }
         if (np.hasPayload() && np.has(QStringLiteral("filename"))) {
             QTemporaryDir tmpDir;
             tmpDir.setAutoRemove(false);
@@ -168,6 +174,10 @@ void ClipboardPlugin::receivePacket(const NetworkPacket &np)
             const QUrl destination = QUrl::fromLocalFile(filePath);
 
             FileTransferJob *job = np.createPayloadTransferJob(destination);
+            if (np.get<bool>(QStringLiteral("isImage"), false)) {
+                job->setProperty("clipboardImage", true);
+                ClipboardListener::instance()->prepareImageTransfer(job);
+            }
             job->setProperty("destUrl", destination.toString());
             job->setProperty("immediateProgressReporting", true);
 

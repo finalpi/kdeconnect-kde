@@ -1,0 +1,38 @@
+name: Windows native clipboard
+on:
+  push:
+    branches: [codex/native-image-clipboard]
+    tags: ['v*-native.*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Prepare pinned build inputs
+        run: python packaging/windows/prepare_sdk.py --output "${{ runner.temp }}/sdk" --sevenzip "C:/Program Files/7-Zip/7z.exe"
+      - name: Compile, verify and package full client
+        run: >-
+          python packaging/windows/create_package.py
+          --base-installer "${{ runner.temp }}/sdk/official.exe"
+          --qt "${{ runner.temp }}/sdk/qt"
+          --frameworks "${{ runner.temp }}/sdk/frameworks"
+          --nsis "${{ runner.temp }}/sdk/nsis/nsis-3.13/makensis.exe"
+          --sevenzip "C:/Program Files/7-Zip/7z.exe"
+          --output "${{ runner.temp }}/output"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kdeconnect-native-windows-x64
+          path: |
+            ${{ runner.temp }}/output/kdeconnect-*-windows-x64.exe
+            ${{ runner.temp }}/output/SHA256SUMS.txt
+            ${{ runner.temp }}/output/fork-build.json
+            ${{ runner.temp }}/output/native/clipboard-test-results.xml

@@ -12,6 +12,10 @@
 
 #include <QDateTime>
 #include <QImage>
+#include <QImageReader>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QMimeData>
 #include <QPixmap>
 #include <QStringLiteral>
@@ -46,6 +50,7 @@ ClipboardListener *ClipboardListener::instance()
 
 void ClipboardListener::refreshContent(const QVariant &content, ClipboardListener::ClipboardContentType contentType)
 {
+    ++m_revision;
     m_updateTimestamp = QDateTime::currentDateTime().toMSecsSinceEpoch();
     m_currentContent = content;
     m_currentContentType = contentType;
@@ -117,6 +122,12 @@ void ClipboardListener::setText(const QString &content)
     clipboard->setMimeData(mime, QClipboard::Clipboard);
 }
 
+void ClipboardListener::prepareImageTransfer(KJob *job)
+{
+    job->setProperty("imageRequest", QVariant::fromValue(++m_imageRequest));
+    job->setProperty("clipboardRevision", QVariant::fromValue(m_revision));
+}
+
 void ClipboardListener::setFile(const KJob *job)
 {
     const auto *ftjob = qobject_cast<const FileTransferJob *>(job);
@@ -128,6 +139,35 @@ void ClipboardListener::setFile(const KJob *job)
             return;
         }
 
+        if (job->property("clipboardImage").toBool()) {
+            const QString localPath = url.toLocalFile();
+            const auto cleanup = [&]() {
+                QFile::remove(localPath);
+                QDir().rmdir(QFileInfo(localPath).absolutePath()); // Empty private transfer directory only.
+            };
+            if (job->property("imageRequest").toULongLong() != m_imageRequest
+                || job->property("clipboardRevision").toULongLong() != m_revision) {
+                cleanup();
+                return;
+            }
+            QImageReader reader(localPath);
+            const QSize dimensions = reader.size();
+            if (!dimensions.isValid() || qint64(dimensions.width()) * dimensions.height() > 80000000) {
+                reader.setFileName(QString());
+                cleanup();
+                return;
+            }
+            const QImage image = reader.read();
+            reader.setFileName(QString()); // Close the input file before Windows temp-file deletion.
+            if (!image.isNull()) {
+                refreshContent(image, ClipboardContentTypeFile);
+                auto imageMime = new QMimeData;
+                imageMime->setImageData(image);
+                clipboard->setMimeData(imageMime, QClipboard::Clipboard);
+            }
+            cleanup();
+            return;
+        }
         refreshContent(url, ClipboardContentType::ClipboardContentTypeFile);
 
         auto mime = new QMimeData;
