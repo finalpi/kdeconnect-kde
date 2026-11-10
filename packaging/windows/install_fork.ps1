@@ -6,7 +6,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 try {
+    Start-Transcript -Path (Join-Path $env:TEMP 'kdeconnect-native-install.log') -Force | Out-Null
     if (-not [Environment]::Is64BitProcess) { throw 'Run this installer from 64-bit PowerShell.' }
+    # Installer subprocesses can inherit incompatible PowerShell 7/VS module paths.
+    $env:PSModulePath = Join-Path $PSHOME 'Modules'
+    Import-Module Microsoft.PowerShell.Utility,Microsoft.PowerShell.Management,Microsoft.PowerShell.Security -ErrorAction Stop
     $payload = [IO.Path]::GetFullPath($PayloadDirectory)
     $target = [IO.Path]::GetFullPath($Destination).TrimEnd('\')
     if (-not [IO.Path]::IsPathRooted($Destination) -or $target -eq [IO.Path]::GetPathRoot($target).TrimEnd('\') -or
@@ -67,4 +71,6 @@ try {
 } catch {
     Write-Error $_ -ErrorAction Continue
     exit 1
+} finally {
+    Stop-Transcript -ErrorAction SilentlyContinue | Out-Null
 }

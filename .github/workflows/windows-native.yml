@@ -28,6 +28,23 @@ jobs:
           --nsis "${{ runner.temp }}/sdk/nsis/nsis-3.13/makensis.exe"
           --sevenzip "C:/Program Files/7-Zip/7z.exe"
           --output "${{ runner.temp }}/output"
+      - name: Install and verify complete client on clean runner
+        shell: pwsh
+        run: |
+          $setups = @(Get-ChildItem '${{ runner.temp }}/output/kdeconnect-*-windows-x64.exe')
+          if ($setups.Count -ne 1) { throw 'Expected exactly one full installer' }
+          $setup = $setups[0]
+          $process = Start-Process -FilePath $setup.FullName -ArgumentList '/S' -Wait -PassThru -WindowStyle Hidden
+          if ($process.ExitCode -ne 0) {
+            Get-Content "$env:TEMP/kdeconnect-native-install.log" -ErrorAction SilentlyContinue
+            throw "Installer exited with $($process.ExitCode)"
+          }
+          $root = Join-Path $env:ProgramFiles 'KDE Connect'
+          $info = Get-Content (Join-Path $root 'fork-build.json') -Raw | ConvertFrom-Json
+          $hash = (Get-FileHash (Join-Path $root 'bin/kdeconnect/kdeconnect_clipboard.dll') -Algorithm SHA256).Hash
+          if ($hash -ne $info.componentSha256) { throw 'Installed component hash mismatch' }
+          if (-not (Test-Path (Join-Path $root 'bin/kdeconnect-app.exe'))) { throw 'Complete client is missing' }
+          if (-not (Test-Path (Join-Path $root 'uninstall.exe'))) { throw 'Uninstaller is missing' }
       - uses: actions/upload-artifact@v4
         with:
           name: kdeconnect-native-windows-x64

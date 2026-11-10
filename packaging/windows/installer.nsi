@@ -38,9 +38,13 @@ Section "KDE Connect (complete client)"
     File "${SOURCE}\packaging\windows\install_fork.ps1"
     nsExec::ExecToLog '"$WINDIR\SysNative\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\install_fork.ps1" -PayloadDirectory "$PLUGINSDIR" -Destination "$INSTDIR"'
     Pop $0
+    DetailPrint "Installer engine result: $0"
+    FileOpen $1 "$TEMP\kdeconnect-native-install-result.txt" w
+    FileWrite $1 "Installer engine result: $0$\r$\n"
+    FileClose $1
     StrCmp $0 "0" installed
     SetErrorLevel 1
-    MessageBox MB_ICONSTOP "Installation failed. See the installer details."
+    MessageBox MB_ICONSTOP "Installation failed (engine result: $0). See the installer details." /SD IDOK
     Abort
 installed:
     SetErrorLevel 0
