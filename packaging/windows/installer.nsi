@@ -8,11 +8,11 @@ InstallDir "$PROGRAMFILES64\KDE Connect"
 RequestExecutionLevel admin
 ; The full official installer is already compressed; avoid recompressing 90 MiB.
 SetCompress off
-VIProductVersion "26.8.2.1"
+VIProductVersion "26.8.2.2"
 VIAddVersionKey /LANG=1033 "ProductName" "KDE Connect Native Clipboard"
 VIAddVersionKey /LANG=1033 "ProductVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "FileDescription" "Complete KDE Connect fork installer"
-VIAddVersionKey /LANG=1033 "FileVersion" "26.8.2.1"
+VIAddVersionKey /LANG=1033 "FileVersion" "26.8.2.2"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "KDE Connect contributors; GPL"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${SOURCE}\LICENSES\GPL-3.0-only.txt"

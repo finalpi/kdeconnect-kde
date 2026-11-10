@@ -4,9 +4,11 @@
 
 ## 使用
 
-从本仓库的 [Releases](https://github.com/finalpi/kdeconnect-kde/releases) 下载 `kdeconnect-26.08.2-native.1-windows-x64.exe`，覆盖安装到原 KDE Connect 目录。安装过程会短暂关闭 KDE Connect，保留原有配对和配置；完成后从原开始菜单快捷方式启动。
+从本仓库的 [Releases](https://github.com/finalpi/kdeconnect-kde/releases) 下载 `kdeconnect-26.08.2-native.2-windows-x64.exe`，覆盖安装到原 KDE Connect 目录。安装过程会短暂关闭 KDE Connect，保留原有配对和配置；完成后从原开始菜单快捷方式启动。
 
 手机使用 [KDE Connect LSPosed 1.37.2-lsposed.4 或更新版本](https://github.com/finalpi/kdeconnect-android-lsposed/releases)，开启“自动同步新截图”。手机截屏后，图片会进入配对且在线电脑的图像剪贴板，可直接粘贴。目标范围沿用剪贴板同步，不需要另选电脑。
+
+从桌面 `26.08.2-native.2` 和手机 `1.37.2-lsposed.5` 开始支持反向同步：电脑截图或复制图片后，手机剪贴板会收到 `image/png` 图像 URI。截图工具必须将图片放入系统剪贴板；只保存文件不会触发同步。手机端无需开启“自动同步新截图”，接收范围由原有共享剪贴板功能控制。手机粘贴图片需要输入法与目标应用支持图像内容，普通纯文字输入框不能直接粘贴图片。
 
 只有带 `isImage=true` 的图片剪贴板数据包会解码为图像；普通文件传输和文件剪贴板仍沿用原有行为。图片接收后清理本次传输的临时文件。传输过程中若用户复制了新内容，尚未完成的旧截图不会覆盖它；多张截图并发时以最新请求为准。图片限 50 MiB、8000 万像素。
 
@@ -16,7 +18,7 @@
 
 安装包包含完整官方客户端和编译后的修改，离线即可安装，不要求电脑预装 KDE Connect。基础安装器保留原有卸载、右键发送、防火墙等集成。安装时会核对核心库和组件哈希，防止 ABI 混用。完整构建来源记录在安装目录的 `fork-build.json` 中。
 
-当前匹配 Qt `6.11.1`、KDE Frameworks `6.30.0`、MSVC 2022 x64。上游 26.08.2 安装包内部将客户端版本标为 26.08.1；本 fork 的安装条目单独标为 `26.08.2-native.1`，不修改上游可执行文件的签名或版本资源。
+当前匹配 Qt `6.11.1`、KDE Frameworks `6.30.0`、MSVC 2022 x64。上游 26.08.2 安装包内部将客户端版本标为 26.08.1；本 fork 的安装条目单独标为 `26.08.2-native.2`，不修改上游可执行文件的签名或版本资源。
 
 ## 本地复现
 

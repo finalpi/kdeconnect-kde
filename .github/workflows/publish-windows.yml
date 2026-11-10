@@ -8,7 +8,7 @@ on:
       tag:
         description: Existing release tag matching that build commit
         required: true
-        default: v26.08.2-native.1
+        default: v26.08.2-native.2
 permissions:
   actions: read
   contents: write

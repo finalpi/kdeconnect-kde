@@ -123,6 +123,8 @@ void ClipboardPlugin::sendClipboard(const QVariant &content)
             NetworkPacket np{PACKET_TYPE_CLIPBOARD_FILE};
 
             np.setPayload(buffer, buffer->size());
+            buffer->seek(0);
+            np.set<bool>(QStringLiteral("isImage"), true);
             np.set<QString>(QStringLiteral("filename"), QString::number(QDateTime::currentMSecsSinceEpoch()) + CLIPBOARD_IMAGE_EXTENSION);
 
             sendPacket(np);

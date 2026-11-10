@@ -1,6 +1,6 @@
 # KDE Connect - desktop app
 
-This fork adds native screenshot-to-image clipboard reception for the
+This fork adds bidirectional native image clipboard synchronization for the
 [LSPosed Android fork](https://github.com/finalpi/kdeconnect-android-lsposed).
 Download the **complete Windows installer** from [Releases](https://github.com/finalpi/kdeconnect-kde/releases).
 No separate add-on or helper process is required. See [中文说明](NATIVE-CLIPBOARD.md)
